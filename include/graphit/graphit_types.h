@@ -3,12 +3,19 @@
 
 #include "builder/dyn_var.h"
 #include "builder/member_base.h"
+#include "builder/builder.h"
 
 namespace graphit {
 
-class gbuilder;
+
+template <int recur>
+struct member;
+
+#define MAX_MEMBER_DEPTH (3)
+using gbuilder = builder::builder_final<member<MAX_MEMBER_DEPTH>>;
+
 template <typename T>
-class dyn_var;
+using dyn_var = builder::dyn_var_final<T, member<MAX_MEMBER_DEPTH>, gbuilder>;
 
 template <int recur>
 struct member: public builder::member_base_impl<gbuilder> {
@@ -33,40 +40,8 @@ struct member<0>: public builder::member_base {
 	using builder::member_base::member_base;
 };
 
-#define MAX_MEMBER_DEPTH (3)
-class gbuilder: public builder::builder_base<gbuilder>, public member<MAX_MEMBER_DEPTH> {
-public:
-	using builder::builder_base<gbuilder>::builder_base;
-	gbuilder operator=(const gbuilder &a) {
-		return assign(a);
-	}
-	using builder::builder_base<gbuilder>::operator[];
-	
-	virtual block::expr::Ptr get_parent() const {
-		return block_expr;
-	}
-	
-	gbuilder(const gbuilder &a): builder_base<gbuilder>(a), member<MAX_MEMBER_DEPTH>() {
-		block_expr = a.block_expr;
-	}
-	
-};
 
-template <typename T>
-class dyn_var: public builder::dyn_var_base<T, dyn_var<T>, gbuilder>, public member<MAX_MEMBER_DEPTH> {
-public:
-	virtual ~dyn_var() = default;
-	using builder::dyn_var_base<T, dyn_var<T>, gbuilder>::dyn_var_base;
-	using builder::dyn_var_base<T, dyn_var<T>, gbuilder>::operator[];
-	using builder::dyn_var_base<T, dyn_var<T>, gbuilder>::operator=;
-	
-	gbuilder operator=(const dyn_var<T> &a) {
-		return (*this = (gbuilder)a);
-	}
-	virtual block::expr::Ptr get_parent() const {
-		return ((gbuilder) (*this)).get_parent();
-	}
-};
+
 
 
 // Commonly used named types in GraphIt
