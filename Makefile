@@ -1,3 +1,4 @@
+-include Makefile.inc
 BASE_DIR=$(shell pwd)
 SRC_DIR=$(BASE_DIR)/src
 BUILD_DIR?=$(BASE_DIR)/build
@@ -7,7 +8,7 @@ BUILDIT_DIR?=$(BASE_DIR)/buildit
 
 SAMPLES_DIR=$(BASE_DIR)/samples
 
-INCLUDES=$(wildcard $(INCLUDE_DIR)/*.h) $(wildcard $(INCLUDE_DIR)/*/*.h) $(wildcard $(BUILDIT_DIR)/*.h) $(wildcard $(BUILDIT_DIR)/*/*.h)
+INCLUDES=$(wildcard $(INCLUDE_DIR)/*.h) $(wildcard $(INCLUDE_DIR)/*/*.h) $(wildcard $(BUILDIT_DIR)/include/*.h) $(wildcard $(BUILDIT_DIR)/include/*/*.h)
 
 INCLUDE_FLAG=-I$(INCLUDE_DIR) -I$(BUILDIT_DIR)/include
 
@@ -40,9 +41,9 @@ LIBRARY=$(BUILD_DIR)/lib$(LIBRARY_NAME).a
 
 CFLAGS+=-Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -Wmissing-declarations -Woverloaded-virtual -pedantic-errors -Wno-deprecated -Wdelete-non-virtual-dtor -Werror
 
-all: subsystem executables 
+all: executables 
 
-.PHONY: subsytem
+.PHONY: subsystem
 subsystem:
 	make -C $(BUILDIT_DIR)
 
@@ -57,7 +58,7 @@ $(BUILD_DIR)/samples/%.o: $(SAMPLES_DIR)/%.cpp $(INCLUDES)
 $(BUILD_DIR)/sample%: $(BUILD_DIR)/samples/sample%.o $(LIBRARY) $(BUILDIT_LIBRARY_PATH)/lib$(BUILDIT_LIBRARY_NAME).a
 	$(CXX) -o $@ $< $(LINKER_FLAGS)
 
-executables: $(SAMPLES)
+executables: $(SAMPLES) subsystem
 
 $(LIBRARY): $(OBJS)
 	ar rv $(LIBRARY) $(OBJS)	

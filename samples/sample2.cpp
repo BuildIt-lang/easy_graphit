@@ -7,12 +7,12 @@
 
 
 
-static void reset(graphit::dyn_var<int> vert) {
-	vert = vert + 1;
+static void reset(graphit::Vertex vert) {
 }
 
 static void foo(void) {	
-	graphit::vertexset_apply(0, reset);
+	graphit::dyn_var<graphit::VertexSubset> frontier;
+	graphit::vertexset_apply(frontier, reset);
 }
 
 

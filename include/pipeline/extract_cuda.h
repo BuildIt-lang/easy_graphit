@@ -15,7 +15,7 @@ namespace pipeline {
 
 block::block::Ptr extract_single_cuda(block::block::Ptr from);
 
-std::vector<block::var::Ptr> extract_extern_vars(block::stmt::Ptr from, block::var::Ptr, block::var::Ptr);
+std::vector<block::var::Ptr> extract_extern_vars(block::block::Ptr function, block::stmt::Ptr from, block::var::Ptr, block::var::Ptr);
 
 extern int total_created_kernels;
 
@@ -24,6 +24,7 @@ public:
 	using block_visitor::visit;
 	std::vector<block::var::Ptr> gathered;
 	std::vector<block::var::Ptr> declared;
+	std::vector<block::var::Ptr> func_declared;
 	virtual void visit(block::var_expr::Ptr);
 };
 
@@ -33,6 +34,7 @@ public:
 	using block_visitor::visit;
 	std::vector<block::var::Ptr> declared;
 	virtual void visit(block::decl_stmt::Ptr);
+	virtual void visit(block::func_decl::Ptr);
 };
 
 

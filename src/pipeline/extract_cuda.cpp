@@ -31,7 +31,7 @@ block::block::Ptr extract_single_cuda(block::block::Ptr from) {
 	
 	block::var::Ptr outer_var = to<block::decl_stmt>(outer_loop->decl_stmt)->decl_var;
 	block::var::Ptr inner_var = to<block::decl_stmt>(inner_loop->decl_stmt)->decl_var;
-	std::vector<block::var::Ptr> vars = extract_extern_vars(inner_loop->body, outer_var, inner_var);
+	std::vector<block::var::Ptr> vars = extract_extern_vars(from, inner_loop->body, outer_var, inner_var);
 
 
 	assert(isa<block::lt_expr>(outer_loop->cond) && "CUDA loops should have condition of the form < ...");
@@ -60,6 +60,7 @@ block::block::Ptr extract_single_cuda(block::block::Ptr from) {
 
 	block::function_call_expr::Ptr call = std::make_shared<block::function_call_expr>();
 	block::var::Ptr call_name = std::make_shared<block::var>();
+	call_name->var_type = builder::dyn_var<int>::create_block_type();
 	call_name->var_name = kernel->func_name;
 	call_name->var_name += "<<<";
 
@@ -73,7 +74,6 @@ block::block::Ptr extract_single_cuda(block::block::Ptr from) {
 	call_name->var_name += ", " + thread_count_str.str();
 	call_name->var_name.pop_back();
 	call_name->var_name += ">>>";
-	call_name->var_type = nullptr;
 	
 	block::var_expr::Ptr call_var_expr = std::make_shared<block::var_expr>();
 	call_var_expr->var1 = call_name;
@@ -128,20 +128,31 @@ void gather_declared_vars::visit(block::decl_stmt::Ptr stmt) {
 		declared.push_back(var1);
 }
 
+void gather_declared_vars::visit(block::func_decl::Ptr stmt) {
+	stmt->return_type->accept(this);
+	for (auto arg : stmt->args) {
+		if (std::find(declared.begin(), declared.end(), arg) == declared.end())
+			declared.push_back(arg);
+	}
+	stmt->body->accept(this);
+}
+
 void gather_extern_vars::visit(block::var_expr::Ptr expr) {
 	block::var::Ptr var1 = expr->var1;
-	if (std::find(gathered.begin(), gathered.end(), var1) == gathered.end() && std::find(declared.begin(), declared.end(), var1) == declared.end())
+	if (std::find(gathered.begin(), gathered.end(), var1) == gathered.end() && std::find(declared.begin(), declared.end(), var1) == declared.end() && std::find(func_declared.begin(), func_declared.end(), var1) != func_declared.end())
 		gathered.push_back(var1);
 }
 
-
-std::vector<block::var::Ptr> extract_extern_vars(block::stmt::Ptr from, block::var::Ptr outer, block::var::Ptr inner) {
+std::vector<block::var::Ptr> extract_extern_vars(block::block::Ptr function, block::stmt::Ptr from, block::var::Ptr outer, block::var::Ptr inner) {
+	gather_declared_vars func_dec;
+	function->accept(&func_dec);
 	gather_declared_vars dec;
 	from->accept(&dec);
 	gather_extern_vars exts;
 	exts.declared = dec.declared;
 	exts.declared.push_back(outer);
 	exts.declared.push_back(inner);
+	exts.func_declared = func_dec.declared;
 	
 	from->accept(&exts);
 
