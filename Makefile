@@ -58,6 +58,7 @@ $(BUILD_DIR)/samples/%.o: $(SAMPLES_DIR)/%.cpp $(INCLUDES)
 $(BUILD_DIR)/sample%: $(BUILD_DIR)/samples/sample%.o $(LIBRARY) $(BUILDIT_LIBRARY_PATH)/lib$(BUILDIT_LIBRARY_NAME).a
 	$(CXX) -o $@ $< $(LINKER_FLAGS)
 
+.PHONY: executables
 executables: $(SAMPLES) subsystem
 
 $(LIBRARY): $(OBJS)
@@ -68,7 +69,10 @@ $(BUILD_DIR)/pipeline/%.o: $(SRC_DIR)/pipeline/%.cpp $(INCLUDES)
 $(BUILD_DIR)/graphit/%.o: $(SRC_DIR)/graphit/%.cpp $(INCLUDES)
 	$(CXX) $(CFLAGS) $< -o $@ $(INCLUDE_FLAG) -c
 
-
+run: executables
+	./build/sample1
+	./build/sample2
+	./build/sample3
 
 clean:
 	rm -rf $(BUILD_DIR)
