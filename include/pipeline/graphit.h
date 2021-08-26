@@ -21,6 +21,8 @@ public:
 	std::vector<block::var::Ptr> declared;
 	virtual void visit(block::var_expr::Ptr);
 };
+void ignore_patchup(block::stmt::Ptr s);
+void handle_atomic_patchups(block::block::Ptr ast);
 
 }
 

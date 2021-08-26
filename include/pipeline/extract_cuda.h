@@ -8,8 +8,9 @@
 #include "blocks/annotation_finder.h"
 #include <vector>
 #include <algorithm>
-
 #define CUDA_ANNOTATION_STRING "run_on_device"
+#define NEEDS_ATOMICS_ANNOTATION "needs_atomics"
+
 
 namespace pipeline {
 
@@ -24,7 +25,6 @@ public:
 	using block_visitor::visit;
 	std::vector<block::var::Ptr> gathered;
 	std::vector<block::var::Ptr> declared;
-	std::vector<block::var::Ptr> func_declared;
 	virtual void visit(block::var_expr::Ptr);
 };
 

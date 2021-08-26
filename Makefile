@@ -55,11 +55,11 @@ $(BUILD_DIR)/samples/%.o: $(SAMPLES_DIR)/%.cpp $(INCLUDES)
 	$(CXX) $(CFLAGS) $< -o $@ $(INCLUDE_FLAG) -c 
 
 .PHONY: $(BUILDIT_LIBRARY_PATH)/lib$(BUILDIT_LIBRARY_NAME).a
-$(BUILD_DIR)/sample%: $(BUILD_DIR)/samples/sample%.o $(LIBRARY) $(BUILDIT_LIBRARY_PATH)/lib$(BUILDIT_LIBRARY_NAME).a
+$(BUILD_DIR)/sample%: $(BUILD_DIR)/samples/sample%.o $(LIBRARY) $(BUILDIT_LIBRARY_PATH)/lib$(BUILDIT_LIBRARY_NAME).a subsystem
 	$(CXX) -o $@ $< $(LINKER_FLAGS)
 
 .PHONY: executables
-executables: $(SAMPLES) subsystem
+executables: $(SAMPLES)
 
 $(LIBRARY): $(OBJS)
 	ar rv $(LIBRARY) $(OBJS)	
@@ -73,6 +73,7 @@ run: executables
 	./build/sample1
 	./build/sample2
 	./build/sample3
+	./build/sample4
 
 clean:
 	rm -rf $(BUILD_DIR)
