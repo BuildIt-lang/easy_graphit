@@ -21,6 +21,9 @@ VertexData<float> old_rank("old_rank");
 VertexData<float> new_rank("new_rank");
 VertexData<float> contrib("contrib");
 
+dyn_var<int> update_outer;
+dyn_var<int> update_inner;
+
 const float damp = 0.85;
 
 
@@ -54,8 +57,6 @@ static void testcase(dyn_var<char*> graph_name, graphit::Schedule &s1) {
 	old_rank.allocate(edges.num_vertices);	
 	new_rank.allocate(edges.num_vertices);	
 	contrib.allocate(edges.num_vertices);	
-
-	old_rank[0] = old_rank[1] + 2;
 
 	for (dyn_var<int> trial = 0; trial < 10; trial = trial + 1) {
 		graphit::runtime::start_timer();

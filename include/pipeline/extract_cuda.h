@@ -9,12 +9,13 @@
 #include <vector>
 #include <algorithm>
 #define CUDA_ANNOTATION_STRING "run_on_device"
+#define CUDA_COOP_ANNOTATION_STRING "coop_run_on_device"
 #define NEEDS_ATOMICS_ANNOTATION "needs_atomics"
 
 
 namespace pipeline {
 
-block::block::Ptr extract_single_cuda(block::block::Ptr from);
+block::block::Ptr extract_single_cuda(block::block::Ptr from, std::vector<block::decl_stmt::Ptr>&);
 
 std::vector<block::var::Ptr> extract_extern_vars(block::block::Ptr function, block::stmt::Ptr from, block::var::Ptr, block::var::Ptr);
 

@@ -201,16 +201,23 @@ static GraphT<EdgeWeightType> builtin_transpose(GraphT<EdgeWeightType> &graph) {
 		output_graph.h_edge_weight[pos] = graph.h_edge_weight[i];
 	}
 
+	output_graph.h_out_degrees = new int32_t[graph.num_vertices];
+	for (int i = 0; i < graph.num_vertices; i++) {
+		output_graph.h_out_degrees[i] = output_graph.h_src_offsets[i+1] - output_graph.h_src_offsets[i];	
+	}
+
 	cudaMalloc(&output_graph.d_edge_src, sizeof(int32_t) * graph.num_edges);
 	cudaMalloc(&output_graph.d_edge_dst, sizeof(int32_t) * graph.num_edges);
 	cudaMalloc(&output_graph.d_edge_weight, sizeof(EdgeWeightType) * graph.num_edges);
 	cudaMalloc(&output_graph.d_src_offsets, sizeof(int32_t) * (graph.num_vertices + 1));
+	cudaMalloc(&output_graph.d_out_degrees, sizeof(int32_t) * (graph.num_vertices));
 	
 	
 	cudaMemcpy(output_graph.d_edge_src, output_graph.h_edge_src, sizeof(int32_t) * graph.num_edges, cudaMemcpyHostToDevice);
 	cudaMemcpy(output_graph.d_edge_dst, output_graph.h_edge_dst, sizeof(int32_t) * graph.num_edges, cudaMemcpyHostToDevice);
 	cudaMemcpy(output_graph.d_edge_weight, output_graph.h_edge_weight, sizeof(EdgeWeightType) * graph.num_edges, cudaMemcpyHostToDevice);
 	cudaMemcpy(output_graph.d_src_offsets, output_graph.h_src_offsets, sizeof(int32_t) * (graph.num_vertices + 1), cudaMemcpyHostToDevice);
+	cudaMemcpy(output_graph.d_out_degrees, output_graph.h_out_degrees, sizeof(int32_t) * (graph.num_vertices), cudaMemcpyHostToDevice);
 	
 	output_graph.twc_small_bin = graph.twc_small_bin;
 	output_graph.twc_mid_bin = graph.twc_mid_bin;

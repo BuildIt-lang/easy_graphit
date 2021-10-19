@@ -28,15 +28,20 @@ public:
 };
 
 
-block::block::Ptr extract_single_cuda(block::block::Ptr from) {
+block::block::Ptr extract_single_cuda(block::block::Ptr from, std::vector<block::decl_stmt::Ptr> &new_decls) {
 	if (!isa<block::stmt_block>(from)) {
 		std::cerr << "extract_single_cuda() expects a stmt_block" << std::endl;
 		return nullptr;
 	}
 
+	int is_coop = 0;
 	block::stmt::Ptr found_loop = block::annotation_finder::find_annotation(from, CUDA_ANNOTATION_STRING);
 	if (found_loop == nullptr) {
-		return nullptr;
+		found_loop = block::annotation_finder::find_annotation(from, CUDA_COOP_ANNOTATION_STRING);
+		if (found_loop == nullptr) {
+			return nullptr;
+		}
+		is_coop = 1;
 	}
 
 	// First we assert that the stmt we have found is a for loop
@@ -62,6 +67,25 @@ block::block::Ptr extract_single_cuda(block::block::Ptr from) {
 	}
 	std::vector<block::var::Ptr> vars = extract_extern_vars(from, inner_loop->body, outer_var, inner_var);
 
+	int this_kern_index = total_created_kernels;
+	total_created_kernels++;
+
+	if (is_coop) {
+		// If this is coop, we will create some extra decls to return the copied values
+		int i = 0;
+		for (auto v: vars) {
+			auto v_new = std::make_shared<block::var>();
+			v_new->var_type = v->var_type;
+			v_new->var_name = "ret_" + std::to_string(this_kern_index) + "_" + std::to_string(i);
+			i++;
+			v_new->setMetadata<std::vector<std::string>>("attributes", {"__device__"});
+
+			auto decl_new = std::make_shared<block::decl_stmt>();
+			decl_new->decl_var = v_new;
+			decl_new->init_expr = nullptr;
+			new_decls.push_back(decl_new);	
+		}
+	}
 
 	assert(isa<block::lt_expr>(outer_loop->cond) && "CUDA loops should have condition of the form < ...");
 	assert(isa<block::lt_expr>(inner_loop->cond) && "CUDA loops should have condition of the form < ...");
@@ -82,34 +106,46 @@ block::block::Ptr extract_single_cuda(block::block::Ptr from) {
 	var_replace_all(inner_loop->body, inner_var, thread_id);
 
 	block::func_decl::Ptr kernel = std::make_shared<block::func_decl>();
-	kernel->func_name = "cuda_kernel_" + std::to_string(total_created_kernels);
-	total_created_kernels++;
+	kernel->func_name = "cuda_kernel_" + std::to_string(this_kern_index);
+
 	kernel->return_type = builder::dyn_var<void>::create_block_type();
 	
 
 	block::function_call_expr::Ptr call = std::make_shared<block::function_call_expr>();
 	block::var::Ptr call_name = std::make_shared<block::var>();
-	call_name->var_type = builder::dyn_var<int>::create_block_type();
-	call_name->var_name = kernel->func_name;
-	call_name->var_name += "<<<";
+	if (!is_coop) {
+		call_name->var_type = builder::dyn_var<int>::create_block_type();
+		call_name->var_name = kernel->func_name;
+		call_name->var_name += "<<<";
 
-	std::ostringstream cta_count_str, thread_count_str;
-	block::c_code_generator::generate_code(cta_count, cta_count_str, 0);
-	block::c_code_generator::generate_code(thread_count, thread_count_str, 0);
+		std::ostringstream cta_count_str, thread_count_str;
+		block::c_code_generator::generate_code(cta_count, cta_count_str, 0);
+		block::c_code_generator::generate_code(thread_count, thread_count_str, 0);
 
-	call_name->var_name += cta_count_str.str();
-	// There is new line at the end - always
-	call_name->var_name.pop_back();
-	call_name->var_name += ", " + thread_count_str.str();
-	call_name->var_name.pop_back();
-	call_name->var_name += ">>>";
-	
+		call_name->var_name += cta_count_str.str();
+		// There is new line at the end - always
+		call_name->var_name.pop_back();
+		call_name->var_name += ", " + thread_count_str.str();
+		call_name->var_name.pop_back();
+		call_name->var_name += ">>>";
+		
+	} else {
+		call_name->var_type = builder::dyn_var<int>::create_block_type();
+		call_name->var_name = "graphit_runtime::LaunchCooperativeKernel";
+		block::var_expr::Ptr param1 = std::make_shared<block::var_expr>();
+		block::var::Ptr param1_var = std::make_shared<block::var>();
+		param1_var->var_type = builder::dyn_var<int>::create_block_type();
+		param1_var->var_name = "(void*)" + kernel->func_name;
+		param1->var1 = param1_var;
+		call->args.push_back(param1);
+		call->args.push_back(cta_count);
+		call->args.push_back(thread_count);
+	}
 	block::var_expr::Ptr call_var_expr = std::make_shared<block::var_expr>();
 	call_var_expr->var1 = call_name;
 	call->expr1 = call_var_expr;
 	block::expr_stmt::Ptr call_stmt = std::make_shared<block::expr_stmt>();
 	call_stmt->expr1 = call;
-
 
 	block::function_call_expr::Ptr call_sync = std::make_shared<block::function_call_expr>();
 	block::var::Ptr call_name_sync = std::make_shared<block::var>();
@@ -142,12 +178,64 @@ block::block::Ptr extract_single_cuda(block::block::Ptr from) {
 	
 	kernel->body = inner_loop->body;
 
+	// If this is a coop kernel, return the values
+	std::vector<block::stmt::Ptr> copy_backs;
+	if (is_coop) {
+		auto if_s = std::make_shared<block::if_stmt>();
+		auto var = std::make_shared<block::var>();
+		var->var_type = builder::dyn_var<int>::create_block_type();
+		var->var_name = "!(blockIdx.x * blockDim.x + threadIdx.x)";
+		auto var_expr = std::make_shared<block::var_expr>();
+		var_expr->var1 = var;
+		if_s->cond = var_expr;
+		if_s->then_stmt = std::make_shared<block::stmt_block>();
+		if_s->else_stmt = std::make_shared<block::stmt_block>();
+		// Add an assignment for each variable
+		int i = 0;
+		auto v_copy = std::make_shared<block::var>();
+		v_copy->var_type = builder::dyn_var<void(void)>::create_block_type();
+		v_copy->var_name = "graphit_runtime::cudaMemcpyFromSymbolMagic";
+		auto v_copy_expr = std::make_shared<block::var_expr>();
+		v_copy_expr->var1 = v_copy;
+		
+
+		for (auto v: kernel->args) {
+			auto rhs = std::make_shared<block::var_expr>();
+			rhs->var1 = v;
+			auto lhs = std::make_shared<block::var_expr>();
+			lhs->var1 = new_decls[i]->decl_var;	
+			auto assign_expr = std::make_shared<block::assign_expr>();
+			assign_expr->var1 = lhs;
+			assign_expr->expr1 = rhs;
+			auto expr_stmt = std::make_shared<block::expr_stmt>();
+			expr_stmt->expr1 = assign_expr;
+			block::to<block::stmt_block>(if_s->then_stmt)->stmts.push_back(expr_stmt);
+
+			// Also create a copy back
+			auto f = std::make_shared<block::function_call_expr>();
+			f->expr1 = v_copy_expr;
+			auto addr = std::make_shared<block::addr_of_expr>();
+			addr->expr1 = call->args[i+3];
+			f->args.push_back(addr);
+			f->args.push_back(lhs);
+			
+			auto stmt = std::make_shared<block::expr_stmt>();
+			stmt->expr1 = f;
+			copy_backs.push_back(stmt);
+
+			i++;
+		}
+		to<block::stmt_block>(kernel->body)->stmts.push_back(if_s);
+	}
+	
 	for (auto stmt: old_stmts->stmts) {
 		if (stmt != found_loop)
 			new_stmts->stmts.push_back(stmt);
 		else {
 			new_stmts->stmts.push_back(call_stmt);
 			new_stmts->stmts.push_back(call_stmt_sync);
+			for (auto a: copy_backs)
+				new_stmts->stmts.push_back(a);
 		}
 	}
 

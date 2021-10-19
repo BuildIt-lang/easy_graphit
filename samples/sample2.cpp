@@ -22,8 +22,10 @@ int main(int argc, char * argv[]) {
 	assert(block::isa<block::func_decl>(ast));
 	
 	block::block::Ptr kernel;
-	while (kernel = pipeline::extract_single_cuda(block::to<block::func_decl>(ast)->body)) {
+	std::vector<block::decl_stmt::Ptr> new_decls;
+	while (kernel = pipeline::extract_single_cuda(block::to<block::func_decl>(ast)->body, new_decls)) {
 		block::c_code_generator::generate_code(kernel, std::cout);
+		new_decls.clear();
 	}
 
 	block::c_code_generator::generate_code(ast, std::cout);

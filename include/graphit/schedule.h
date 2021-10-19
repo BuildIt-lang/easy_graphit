@@ -1,12 +1,22 @@
 #ifndef GRAPHIT_SCHEDULE_H
 #define GRAPHIT_SCHEDULE_H
 
+#include "graphit/dyn_core.h"
 namespace graphit {
 
 // Abstract schedule class
 struct Schedule {
 	virtual ~Schedule() = default;
 };
+
+template <typename T>
+bool s_isa(Schedule* s) {
+	return dynamic_cast<T*>(s) != nullptr;
+}
+template <typename T>
+T* s_to(Schedule *s) {
+	return dynamic_cast<T*>(s);
+}
 
 // Simple GPU Schedule class
 struct SimpleGPUSchedule: public Schedule{
@@ -103,6 +113,26 @@ struct SimpleGPUSchedule: public Schedule{
 	}
 };
 
+
+// Simple GPU Schedule class
+struct HybridGPUSchedule: public Schedule{
+public:
+	Schedule* s1;
+	Schedule* s2;
+
+	// The threshold is a dynamic paramter to allow for runtime scheduling
+	dyn_var<float> *threshold = nullptr;
+	float static_threshold;
+	HybridGPUSchedule(Schedule &_s1, Schedule &_s2) {
+		s1 = &_s1;
+		s2 = &_s2;
+	}
+	void configThreshold(float t) {
+		threshold = nullptr;
+		static_threshold = t;
+	}
+	void bindThreshold(dyn_var<float>&);
+};
 
 }
 #endif

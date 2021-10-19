@@ -22,7 +22,8 @@ int main(int argc, char * argv[]) {
 	builder::builder_context context;
 	auto ast = context.extract_function_ast(foo, "foo");
 	assert(block::isa<block::func_decl>(ast));
-	auto ast2 = pipeline::extract_single_cuda(block::to<block::func_decl>(ast)->body);
+	std::vector<block::decl_stmt::Ptr> new_decls;
+	auto ast2 = pipeline::extract_single_cuda(block::to<block::func_decl>(ast)->body, new_decls);
 	ast->dump(std::cout, 0);
 	if (ast2 != nullptr) {
 		ast2->dump(std::cout, 0);

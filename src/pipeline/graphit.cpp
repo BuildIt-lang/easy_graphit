@@ -72,8 +72,8 @@ void handle_atomic_patchups(block::block::Ptr ast) {
 		finder.to_find = needs_atomic;
 		ast->accept(&finder);
 		block::if_stmt::Ptr if_s = finder.parent_found;
-	
-		if (!block::isa<block::equals_expr>(if_s->cond)) {
+                	
+		if (!if_s || !block::isa<block::equals_expr>(if_s->cond)) {
 			ignore_patchup(needs_atomic);
 			continue;
 		}
@@ -118,6 +118,8 @@ void handle_atomic_patchups(block::block::Ptr ast) {
 void run_graphit_pipeline(block::block::Ptr ast, std::ostream& oss) {
 
 	// Before we do anything, let us include the headers
+	oss << "#define NUM_CTA (" << graphit::SimpleGPUSchedule::default_max_cta << ")" << std::endl;
+	oss << "#define CTA_SIZE (" << graphit::SimpleGPUSchedule::default_cta_size << ")" << std::endl;
 	oss << "#include \"gpu_intrinsics.h\"" << std::endl;
 	oss << "#include <cooperative_groups.h>" << std::endl;
 
@@ -130,8 +132,13 @@ void run_graphit_pipeline(block::block::Ptr ast, std::ostream& oss) {
 		block::c_code_generator::generate_code(decl, oss);
 
 	block::block::Ptr kernel;
-	while (kernel = pipeline::extract_single_cuda(block::to<block::func_decl>(ast)->body)) {
+	std::vector<block::decl_stmt::Ptr> new_decls;
+	while (kernel = pipeline::extract_single_cuda(block::to<block::func_decl>(ast)->body, new_decls)) {
+		for (auto d: new_decls) {
+			block::c_code_generator::generate_code(d, oss);
+		}
 		block::c_code_generator::generate_code(kernel, oss);
+		new_decls.clear();
 	}
 
 	block::c_code_generator::generate_code(ast, oss);

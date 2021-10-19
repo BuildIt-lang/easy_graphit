@@ -65,23 +65,35 @@ static void testcase(dyn_var<char*> graph_name, dyn_var<int> src, dyn_var<float>
 
 
 int main(int argc, char * argv[]) {
-	graphit::SimpleGPUSchedule::default_max_cta = 40;
-	graphit::SimpleGPUSchedule::default_cta_size = 256;
-	
-	
-	graphit::SimpleGPUSchedule s1;
-	s1.configDirection(graphit::SimpleGPUSchedule::direction_type::PUSH);
-	s1.configLoadBalancing(graphit::SimpleGPUSchedule::load_balancing_type::TWCE);
-	//s1.configLoadBalancing(graphit::SimpleGPUSchedule::load_balancing_type::VERTEX_BASED);
 
-	graphit::SimpleGPUSchedule s2;
-	s2.configDirection(graphit::SimpleGPUSchedule::direction_type::PULL, graphit::SimpleGPUSchedule::pull_frontier_rep_type::BITMAP);
-	s2.configLoadBalancing(graphit::SimpleGPUSchedule::load_balancing_type::VERTEX_BASED);
-	s2.configFrontierCreation(graphit::SimpleGPUSchedule::frontier_creation_type::BITMAP);
+	if (argc > 1 && std::string(argv[1]) == "power") {
+		graphit::SimpleGPUSchedule::default_max_cta = 160;
+		graphit::SimpleGPUSchedule::default_cta_size = 512;
 		
-	graphit::HybridGPUSchedule h1 (s1, s2);
+		graphit::SimpleGPUSchedule s1;
+		s1.configDirection(graphit::SimpleGPUSchedule::direction_type::PUSH);
+		s1.configLoadBalancing(graphit::SimpleGPUSchedule::load_balancing_type::TWCE);
 
-	auto ast = builder::builder_context().extract_function_ast(testcase, "BFS", h1, false);
-	pipeline::run_graphit_pipeline(ast, std::cout);	
+		graphit::SimpleGPUSchedule s2;
+		s2.configDirection(graphit::SimpleGPUSchedule::direction_type::PULL, graphit::SimpleGPUSchedule::pull_frontier_rep_type::BITMAP);
+		s2.configLoadBalancing(graphit::SimpleGPUSchedule::load_balancing_type::VERTEX_BASED);
+		s2.configFrontierCreation(graphit::SimpleGPUSchedule::frontier_creation_type::BITMAP);
+			
+		graphit::HybridGPUSchedule h1 (s1, s2);
+
+		auto ast = builder::builder_context().extract_function_ast(testcase, "BFS", h1, false);
+		pipeline::run_graphit_pipeline(ast, std::cout);	
+	} else {
+		graphit::SimpleGPUSchedule::default_max_cta = 40;
+		graphit::SimpleGPUSchedule::default_cta_size = 256;
+
+		graphit::SimpleGPUSchedule s1;
+		s1.configDirection(graphit::SimpleGPUSchedule::direction_type::PUSH);
+		s1.configLoadBalancing(graphit::SimpleGPUSchedule::load_balancing_type::TWCE);
+
+		auto ast = builder::builder_context().extract_function_ast(testcase, "BFS", s1, true);
+		pipeline::run_graphit_pipeline(ast, std::cout);	
+		
+	}
 	return 0;
 }
