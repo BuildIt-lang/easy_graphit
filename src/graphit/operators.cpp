@@ -270,8 +270,8 @@ void TWCE_load_balance_impl(dyn_var<GraphT> graph, FT f, dyn_var<int> count, ET 
 				continue;
 			Vertex dst_var(dst);
 			dst_var.current_access = Vertex::access_type::SHARED;
-			//f(src_var, dst_var, graph.d_edge_weight[neigh_id]);
-			f(src_var, dst_var, 0);
+			f(src_var, dst_var, graph.d_edge_weight[neigh_id]);
+			//f(src_var, dst_var, 0);
 		}
 	}
 	runtime::sync_threads();
@@ -297,8 +297,8 @@ void TWCE_load_balance_impl(dyn_var<GraphT> graph, FT f, dyn_var<int> count, ET 
 				continue;
 			Vertex dst_var(dst);
 			dst_var.current_access = Vertex::access_type::SHARED;
-			//f(src_var, dst_var, graph.d_edge_weight[neigh_id]);			
-			f(src_var, dst_var, 0);
+			f(src_var, dst_var, graph.d_edge_weight[neigh_id]);			
+			//f(src_var, dst_var, 0);
 		}
 	}
 	for (dyn_var<int32_t> wid = 0; wid < stage_queue_sizes[2]; wid = wid + 1) {
@@ -316,8 +316,8 @@ void TWCE_load_balance_impl(dyn_var<GraphT> graph, FT f, dyn_var<int> count, ET 
 				continue;
 			Vertex dst_var(dst);
 			dst_var.current_access = Vertex::access_type::SHARED;
-			//f(src_var, dst_var, graph.d_edge_weight[neigh_id]);
-			f(src_var, dst_var, 0);
+			f(src_var, dst_var, graph.d_edge_weight[neigh_id]);
+			//f(src_var, dst_var, 0);
 		}
 	}
 }

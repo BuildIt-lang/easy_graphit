@@ -117,9 +117,14 @@ static void LaunchCooperativeKernel(void* f, int block_size, int cta_size, const
 }
 
 
+template <typename T, typename T2>
+void cudaMemcpyFromSymbolMagic(T* dst, const T2 & symbol) {
+	cudaMemcpyFromSymbol((char*)dst, symbol, sizeof(T), 0);
+}
 template <typename T>
-void cudaMemcpyFromSymbolMagic(void* dst, const T & symbol) {
-	cudaMemcpyFromSymbol(dst, symbol, sizeof(T), 0);
+void __device__ cudaMemcpyToSymbolMagic(char symbol[], const T& src) {
+	//cudaMemcpyFromSymbol(dst, symbol, sizeof(T), 0);
+	memcpy(symbol, &src, sizeof(T));
 }
 
 }

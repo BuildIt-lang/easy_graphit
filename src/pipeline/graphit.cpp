@@ -37,9 +37,11 @@ public:
 	virtual void visit(block::if_stmt::Ptr if_s) {
 		if (block::isa<block::stmt_block>(if_s->then_stmt)) {
 			block::stmt_block::Ptr block = block::to<block::stmt_block>(if_s->then_stmt);
-			if (block->stmts[0] == to_find) {
-				parent_found = if_s;
-				return;
+			for (auto stmt: block->stmts) {
+				if (stmt == to_find) {
+					parent_found = if_s;
+					return;
+				}
 			}
 		}
 		block::block_visitor::visit(if_s);
@@ -109,8 +111,12 @@ void handle_atomic_patchups(block::block::Ptr ast) {
 		if_s->cond = f;
 		
 		// Now fix all the statements;
-		std::vector<block::stmt::Ptr> &thens = block::to<block::stmt_block>(if_s->then_stmt)->stmts;
-		thens.erase(thens.begin());
+		std::vector<block::stmt::Ptr> thens;
+		for (auto stmt: block::to<block::stmt_block>(if_s->then_stmt)->stmts) {
+			if (stmt != needs_atomic)
+				thens.push_back(stmt);
+		}
+		block::to<block::stmt_block>(if_s->then_stmt)->stmts = thens;
 		
 	}	
 }

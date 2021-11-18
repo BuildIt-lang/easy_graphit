@@ -69,14 +69,23 @@ block::block::Ptr extract_single_cuda(block::block::Ptr from, std::vector<block:
 
 	int this_kern_index = total_created_kernels;
 	total_created_kernels++;
-
+	std::vector<block::var::Ptr> ret_vars;
 	if (is_coop) {
 		// If this is coop, we will create some extra decls to return the copied values
 		int i = 0;
 		for (auto v: vars) {
+			std::ostringstream type_str;
+			block::c_code_generator::generate_code(v->var_type, type_str, 0);
+			std::string type_string = type_str.str();
+			type_string.pop_back();	
 			auto v_new = std::make_shared<block::var>();
-			v_new->var_type = v->var_type;
-			v_new->var_name = "ret_" + std::to_string(this_kern_index) + "_" + std::to_string(i);
+			v_new->var_type = builder::dyn_var<char>::create_block_type();	
+			//v_new->var_type = v->var_type;
+			v_new->var_name = "ret_" + std::to_string(this_kern_index) + "_" + std::to_string(i) + "[sizeof(" + type_string +")]";
+			auto v_new_ret = std::make_shared<block::var>();
+			v_new_ret->var_type = builder::dyn_var<char>::create_block_type();	
+			v_new_ret->var_name = "ret_" + std::to_string(this_kern_index) + "_" + std::to_string(i);
+			ret_vars.push_back(v_new_ret);
 			i++;
 			v_new->setMetadata<std::vector<std::string>>("attributes", {"__device__"});
 
@@ -197,18 +206,26 @@ block::block::Ptr extract_single_cuda(block::block::Ptr from, std::vector<block:
 		v_copy->var_name = "graphit_runtime::cudaMemcpyFromSymbolMagic";
 		auto v_copy_expr = std::make_shared<block::var_expr>();
 		v_copy_expr->var1 = v_copy;
+	
+		auto m_copy = std::make_shared<block::var>();
+		m_copy->var_type = builder::dyn_var<void(void)>::create_block_type();
+		m_copy->var_name = "graphit_runtime::cudaMemcpyToSymbolMagic";
+		auto m_copy_expr = std::make_shared<block::var_expr>();
+		m_copy_expr->var1 = m_copy;
 		
 
 		for (auto v: kernel->args) {
 			auto rhs = std::make_shared<block::var_expr>();
 			rhs->var1 = v;
 			auto lhs = std::make_shared<block::var_expr>();
-			lhs->var1 = new_decls[i]->decl_var;	
-			auto assign_expr = std::make_shared<block::assign_expr>();
-			assign_expr->var1 = lhs;
-			assign_expr->expr1 = rhs;
+			lhs->var1 = ret_vars[i];
+			auto f2 = std::make_shared<block::function_call_expr>();
+			f2->expr1 = m_copy_expr;
+			f2->args.push_back(lhs);
+			f2->args.push_back(rhs);
+
 			auto expr_stmt = std::make_shared<block::expr_stmt>();
-			expr_stmt->expr1 = assign_expr;
+			expr_stmt->expr1 = f2;
 			block::to<block::stmt_block>(if_s->then_stmt)->stmts.push_back(expr_stmt);
 
 			// Also create a copy back

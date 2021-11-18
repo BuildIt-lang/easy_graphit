@@ -75,7 +75,9 @@ static void testcase(dyn_var<char*> graph_name, graphit::Schedule &s1) {
 
 
 int main(int argc, char * argv[]) {
-	graphit::SimpleGPUSchedule::default_max_cta = 160;
+	
+	graphit::SimpleGPUSchedule::default_max_cta = atoi(argv[1]);
+	graphit::SimpleGPUSchedule::default_cta_size = atoi(argv[2]);
 	
 	graphit::SimpleGPUSchedule s1;
 	s1.configDirection(graphit::SimpleGPUSchedule::direction_type::PULL);

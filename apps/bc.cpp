@@ -76,7 +76,7 @@ static void testcase(dyn_var<char*> graph_name, dyn_var<int> src, dyn_var<float>
 	dependences.allocate(edges.num_vertices);
 	visited.allocate(edges.num_vertices);
 	
-	for (dyn_var<int> trial = 0; trial < 10; trial = trial + 1) {
+	for (dyn_var<int> trial = 0; trial < 3; trial = trial + 1) {
 		dyn_var<VertexSubset> frontier = graphit::runtime::new_vertex_subset(edges.num_vertices);
 
 		graphit::runtime::start_timer();
@@ -127,9 +127,9 @@ static void testcase(dyn_var<char*> graph_name, dyn_var<int> src, dyn_var<float>
 
 int main(int argc, char * argv[]) {
 
-	if (argc > 1 && std::string(argv[1]) == "power") {
-		graphit::SimpleGPUSchedule::default_max_cta = 160;
-		graphit::SimpleGPUSchedule::default_cta_size = 512;
+	graphit::SimpleGPUSchedule::default_max_cta = atoi(argv[1]);
+	graphit::SimpleGPUSchedule::default_cta_size = atoi(argv[2]);
+	if (argc > 3 && std::string(argv[3]) == "power") {
 		
 		graphit::SimpleGPUSchedule s1;
 		s1.configDirection(graphit::SimpleGPUSchedule::direction_type::PUSH);
@@ -146,8 +146,6 @@ int main(int argc, char * argv[]) {
 		auto ast = builder::builder_context().extract_function_ast(testcase, "BC", h1, false);
 		pipeline::run_graphit_pipeline(ast, std::cout);	
 	} else {
-		graphit::SimpleGPUSchedule::default_max_cta = 40;
-		graphit::SimpleGPUSchedule::default_cta_size = 256;
 
 		graphit::SimpleGPUSchedule s1;
 		s1.configDirection(graphit::SimpleGPUSchedule::direction_type::PUSH);
