@@ -12,12 +12,11 @@
 
 using graphit::Vertex;
 using graphit::VertexData;
-using graphit::dyn_var;
 using graphit::VertexSubset;
 using graphit::GraphT;
 
 VertexData<int> ID("ID");
-dyn_var<GraphT> edges("edges");
+GraphT edges("edges");
 
 VertexData<int> updates("update");
 

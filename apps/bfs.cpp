@@ -12,13 +12,12 @@
 
 using graphit::Vertex;
 using graphit::VertexData;
-using graphit::dyn_var;
 using graphit::VertexSubset;
 using graphit::GraphT;
 
 
 VertexData<int> parent("parent");
-dyn_var<GraphT> edges("edges");
+GraphT edges("edges");
 
 
 static void updateEdge(Vertex src, Vertex dst) {
@@ -45,7 +44,7 @@ static void testcase(dyn_var<char*> graph_name, dyn_var<int> src, dyn_var<float>
 	parent.allocate(edges.num_vertices);	
 	
 	for (dyn_var<int> trial = 0; trial < 4; trial = trial + 1) {
-		dyn_var<VertexSubset> frontier = graphit::runtime::new_vertex_subset(edges.num_vertices);
+		VertexSubset frontier = graphit::runtime::new_vertex_subset(edges.num_vertices);
 		graphit::runtime::start_timer();
 		graphit::vertexset_apply(edges, reset);
 		parent[src] = src;

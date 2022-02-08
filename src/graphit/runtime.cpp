@@ -3,23 +3,23 @@
 namespace graphit {
 namespace runtime {
 
-dyn_var<VertexSubset (int, int)>  new_vertex_subset ("graphit_runtime::new_vertex_subset");
-dyn_var<GraphT (char*)> load_graph ("graphit_runtime::load_graph<int>");
-dyn_var<void (VertexSubset, int)> enqueue_sparse ("graphit_runtime::enqueue_sparse");
-dyn_var<void (VertexSubset, int)> enqueue_sparse_no_dupes ("graphit_runtime::enqueue_sparse_no_dupes");
-dyn_var<void (VertexSubset, int)> enqueue_bitmap ("graphit_runtime::enqueue_bitmap");
-dyn_var<void (VertexSubset, int)> enqueue_boolmap ("graphit_runtime::enqueue_boolmap");
+dyn_var<VertexSubset::super_name (int, int)>  new_vertex_subset ("graphit_runtime::new_vertex_subset");
+dyn_var<GraphT::super_name (char*)> load_graph ("graphit_runtime::load_graph<int>");
+dyn_var<void (VertexSubset::super_name, int)> enqueue_sparse ("graphit_runtime::enqueue_sparse");
+dyn_var<void (VertexSubset::super_name, int)> enqueue_sparse_no_dupes ("graphit_runtime::enqueue_sparse_no_dupes");
+dyn_var<void (VertexSubset::super_name, int)> enqueue_bitmap ("graphit_runtime::enqueue_bitmap");
+dyn_var<void (VertexSubset::super_name, int)> enqueue_boolmap ("graphit_runtime::enqueue_boolmap");
 
 dyn_var<void (void*, void*, int)> copyHostToDevice ("graphit_runtime::cudaMemcpyHostToDevice");
 dyn_var<void (void*, void*, int)> copyDeviceToHost ("graphit_runtime::cudaMemcpyDeviceToHost");
 dyn_var<int (void*, int)> writeMin ("graphit_runtime::writeMin");
 dyn_var<int (void*, int)> writeSum ("graphit_runtime::writeSum");
 
-dyn_var<void (VertexSubset)> to_sparse_host("graphit_runtime::to_sparse_host");
-dyn_var<void (VertexSubset)> to_sparse_device("graphit_runtime::to_sparse_device");
-dyn_var<void (VertexSubset)> to_bitmap("graphit_runtime::to_bitmap");
-dyn_var<void (VertexSubset)> to_boolmap("graphit_runtime::to_boolmap");
-dyn_var<int (VertexSubset, int)> checkBit("graphit_runtime::checkBit");
+dyn_var<void (VertexSubset::super_name)> to_sparse_host("graphit_runtime::to_sparse_host");
+dyn_var<void (VertexSubset::super_name)> to_sparse_device("graphit_runtime::to_sparse_device");
+dyn_var<void (VertexSubset::super_name)> to_bitmap("graphit_runtime::to_bitmap");
+dyn_var<void (VertexSubset::super_name)> to_boolmap("graphit_runtime::to_boolmap");
+dyn_var<int (VertexSubset::super_name, int)> checkBit("graphit_runtime::checkBit");
 
 dyn_var<void (void*, int)> cudaMalloc("graphit_runtime::cudaMalloc");
 dyn_var<void (void*, void*, int, int)> cudaMemcpyToSymbol("graphit_runtime::cudaMemcpyToSymbol");

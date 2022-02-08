@@ -1,7 +1,11 @@
 #ifndef GRAPHIT_SCHEDULE_H
 #define GRAPHIT_SCHEDULE_H
+#include "builder/dyn_var.h"
+#include "builder/static_var.h"
 
-#include "graphit/dyn_core.h"
+using builder::dyn_var;
+using builder::as_member_of;
+
 namespace graphit {
 
 // Abstract schedule class

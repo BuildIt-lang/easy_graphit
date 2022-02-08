@@ -11,7 +11,8 @@ static void reset(graphit::Vertex vert) {
 }
 
 static void foo(void) {	
-	graphit::dyn_var<graphit::VertexSubset> frontier;
+	graphit::current_context = graphit::context_type::HOST;
+	graphit::VertexSubset frontier;
 	graphit::vertexset_apply(frontier, reset);
 }
 
@@ -23,10 +24,12 @@ int main(int argc, char * argv[]) {
 	
 	block::block::Ptr kernel;
 	std::vector<block::decl_stmt::Ptr> new_decls;
+
 	while (kernel = pipeline::extract_single_cuda(block::to<block::func_decl>(ast)->body, new_decls)) {
 		block::c_code_generator::generate_code(kernel, std::cout);
 		new_decls.clear();
 	}
+
 
 	block::c_code_generator::generate_code(ast, std::cout);
 	return 0;

@@ -7,7 +7,7 @@ namespace graphit {
 dyn_var<int>* cta_id_ptr = nullptr;
 dyn_var<int>* thread_id_ptr = nullptr;
 
-void vertexset_apply(dyn_var<VertexSubset> &set, vertexset_apply_udf_t udf) {
+void vertexset_apply(VertexSubset &set, vertexset_apply_udf_t udf) {
 	if (current_context == context_type::DEVICE) {	
 		graphit::runtime::to_sparse_device(set);
 		int CTA_SIZE = SimpleGPUSchedule::default_cta_size;
@@ -45,7 +45,7 @@ void vertexset_apply(dyn_var<VertexSubset> &set, vertexset_apply_udf_t udf) {
 	}
 	current_context = context_type::HOST;
 }
-void vertexset_apply(dyn_var<GraphT> &edges, vertexset_apply_udf_t udf) {
+void vertexset_apply(GraphT &edges, vertexset_apply_udf_t udf) {
 	int CTA_SIZE = SimpleGPUSchedule::default_cta_size;
 	int MAX_CTA = SimpleGPUSchedule::default_max_cta;
 
@@ -70,7 +70,7 @@ static bool true_func(dyn_var<int> vid) {
 
 
 template <typename FT, typename ET, typename SFT, typename DFT>
-void vertex_based_load_balance_impl(dyn_var<GraphT> graph, FT f, dyn_var<int> count,
+void vertex_based_load_balance_impl(GraphT graph, FT f, dyn_var<int> count,
 		ET enumerator, SFT src_filter, DFT dst_filter, SimpleGPUSchedule* schedule, dyn_var<int> &cta_id, 
 		dyn_var<int> &thread_id, dyn_var<int> MAX_CTA, int CTA_SIZE) {
 
@@ -95,7 +95,7 @@ void vertex_based_load_balance_impl(dyn_var<GraphT> graph, FT f, dyn_var<int> co
 }
 
 template <typename FT, typename ET, typename SFT, typename DFT>
-void vertex_based_load_balance(dyn_var<GraphT> graph, FT f, dyn_var<int> count,
+void vertex_based_load_balance(GraphT graph, FT f, dyn_var<int> count,
 		ET enumerator, SFT src_filter, DFT dst_filter, SimpleGPUSchedule* schedule) {
 
 
@@ -129,7 +129,7 @@ void vertex_based_load_balance(dyn_var<GraphT> graph, FT f, dyn_var<int> count,
 }
 
 template <typename FT, typename ET, typename SFT, typename DFT>
-void edge_only_load_balance_blocked(dyn_var<GraphT> graph, FT f, dyn_var<int> count,
+void edge_only_load_balance_blocked(GraphT graph, FT f, dyn_var<int> count,
 		ET enumerator, SFT src_filter, DFT dst_filter, SimpleGPUSchedule* schedule) {
 	
 	int CTA_SIZE = schedule->cta_size;
@@ -173,7 +173,7 @@ void edge_only_load_balance_blocked(dyn_var<GraphT> graph, FT f, dyn_var<int> co
 
 
 template <typename FT, typename ET, typename SFT, typename DFT>
-void edge_only_load_balance(dyn_var<GraphT> graph, FT f, dyn_var<int> count,
+void edge_only_load_balance(GraphT graph, FT f, dyn_var<int> count,
 		ET enumerator, SFT src_filter, DFT dst_filter, SimpleGPUSchedule* schedule) {
 
 	int CTA_SIZE = schedule->cta_size;
@@ -201,7 +201,7 @@ void edge_only_load_balance(dyn_var<GraphT> graph, FT f, dyn_var<int> count,
 #define STAGE_1_SIZE (8)
 #define WARP_SIZE (32)
 template <typename FT, typename ET, typename SFT, typename DFT>
-void TWCE_load_balance_impl(dyn_var<GraphT> graph, FT f, dyn_var<int> count, ET enumerator, SFT src_filter, 
+void TWCE_load_balance_impl(GraphT graph, FT f, dyn_var<int> count, ET enumerator, SFT src_filter, 
 		DFT dst_filter, SimpleGPUSchedule* schedule, dyn_var<int> &cta_id, 
 		dyn_var<int> &thread_id, dyn_var<int> &MAX_CTA, int CTA_SIZE) {
 
@@ -323,7 +323,7 @@ void TWCE_load_balance_impl(dyn_var<GraphT> graph, FT f, dyn_var<int> count, ET 
 }
 
 template <typename FT, typename ET, typename SFT, typename DFT>
-void TWCE_load_balance(dyn_var<GraphT> graph, FT f, dyn_var<int> count, ET enumerator, SFT src_filter, 
+void TWCE_load_balance(GraphT graph, FT f, dyn_var<int> count, ET enumerator, SFT src_filter, 
 		DFT dst_filter, SimpleGPUSchedule* schedule) {
 	int CTA_SIZE = schedule->cta_size;
 	dyn_var<int> num_threads = count * STAGE_1_SIZE;
@@ -357,7 +357,7 @@ void TWCE_load_balance(dyn_var<GraphT> graph, FT f, dyn_var<int> count, ET enume
 }
 
 template <typename FT, typename ET, typename SFT, typename DFT>
-void CM_load_balance_impl(dyn_var<GraphT> graph, FT f, dyn_var<int> count, ET enumerator, SFT src_filter, 
+void CM_load_balance_impl(GraphT graph, FT f, dyn_var<int> count, ET enumerator, SFT src_filter, 
 		DFT dst_filter, SimpleGPUSchedule* schedule, dyn_var<int> &cta_id, 
 		dyn_var<int> &thread_id, dyn_var<int> &MAX_CTA, int CTA_SIZE) {	
 	dyn_var<int> tid = cta_id * CTA_SIZE + thread_id;
@@ -457,7 +457,7 @@ void CM_load_balance_impl(dyn_var<GraphT> graph, FT f, dyn_var<int> count, ET en
 }
 
 template <typename FT, typename ET, typename SFT, typename DFT>
-void CM_load_balance(dyn_var<GraphT> graph, FT f, dyn_var<int> count, ET enumerator, SFT src_filter, 
+void CM_load_balance(GraphT graph, FT f, dyn_var<int> count, ET enumerator, SFT src_filter, 
 		DFT dst_filter, SimpleGPUSchedule* schedule) {
 	
 	int CTA_SIZE = schedule->cta_size;
@@ -492,7 +492,7 @@ void CM_load_balance(dyn_var<GraphT> graph, FT f, dyn_var<int> count, ET enumera
 }
 // Host only implementation for now
 template <typename FT>
-void create_reverse_frontier(dyn_var<int> count, dyn_var<VertexSubset>* e, FT f) {
+void create_reverse_frontier(dyn_var<int> count, VertexSubset* e, FT f) {
 	int CTA_SIZE = SimpleGPUSchedule::default_cta_size;
 	int MAX_CTA = SimpleGPUSchedule::default_max_cta;
 
@@ -510,7 +510,7 @@ void create_reverse_frontier(dyn_var<int> count, dyn_var<VertexSubset>* e, FT f)
 	}
 	current_context = context_type::HOST;
 }
-void edgeset_apply::apply(dyn_var<GraphT> &graph, edgeset_apply_udf_w_t udf) {
+void edgeset_apply::apply(GraphT &graph, edgeset_apply_udf_w_t udf) {
 	
 	// If we have a hybrid schedule on our hand, we need to recusrively call two separate versions
 	if (s_isa<HybridGPUSchedule>(current_schedule)) {
@@ -535,7 +535,7 @@ void edgeset_apply::apply(dyn_var<GraphT> &graph, edgeset_apply_udf_w_t udf) {
 	std::function<dyn_var<int>(dyn_var<int>)> enumerator;
 	std::function<bool(dyn_var<int>)> src_filter;
 	std::function<bool(dyn_var<int>)> dst_filter;
-	dyn_var<GraphT*> graph_to_use = &graph;
+	dyn_var<GraphT::super_name*> graph_to_use = &graph;
 	
 	std::function<void(Vertex, Vertex, dyn_var<int>)> udf_apply;
 	
@@ -574,6 +574,12 @@ void edgeset_apply::apply(dyn_var<GraphT> &graph, edgeset_apply_udf_w_t udf) {
 		
 		udf_apply = udf;
 	} else {
+		if (to_filter) {
+			src_filter = [=] (dyn_var<int> v) {
+				return (bool) to_filter((Vertex)v);
+			};
+		} else 
+			src_filter = true_func;
 		if (from_set == nullptr) {
 			count = graph.num_vertices;
 			enumerator = [] (dyn_var<int> a) {
@@ -595,7 +601,7 @@ void edgeset_apply::apply(dyn_var<GraphT> &graph, edgeset_apply_udf_w_t udf) {
 				};
 			}
 			// Create a reverse frontier first
-			create_reverse_frontier(graph.num_vertices, from_set, to_filter);	
+			create_reverse_frontier(graph.num_vertices, from_set, src_filter);	
 			if (current_context == context_type::DEVICE)
 				(*from_set).swap_queues_device();	
 			else
@@ -606,13 +612,8 @@ void edgeset_apply::apply(dyn_var<GraphT> &graph, edgeset_apply_udf_w_t udf) {
 				return (*from_set).d_sparse_queue_input[a];
 			};
 		}
-		if (to_filter) {
-			src_filter = [=] (dyn_var<int> v) {
-				return (bool) to_filter((Vertex)v);
-			};
-		} else 
-			src_filter = true_func;
-		graph_to_use = graph_to_use[0].get_transposed_graph();
+		GraphT g = graph_to_use[0];
+		graph_to_use = g.get_transposed_graph();
 		udf_apply = [=] (Vertex src, Vertex dst, dyn_var<int> w) {
 			udf(dst, src, w);
 		};
@@ -621,7 +622,8 @@ void edgeset_apply::apply(dyn_var<GraphT> &graph, edgeset_apply_udf_w_t udf) {
 	if (simple_schedule->load_balancing == SimpleGPUSchedule::load_balancing_type::EDGE_ONLY 
 		&& simple_schedule->edge_blocking == SimpleGPUSchedule::edge_blocking_type::BLOCKED) {
 		assert(simple_schedule->block_size != -1 && "Invalid block size value");	
-		graph_to_use = graph_to_use[0].get_blocked_graph(simple_schedule->block_size);
+		GraphT g = graph_to_use[0];
+		graph_to_use = g.get_blocked_graph(simple_schedule->block_size);
 	}
 	
 	

@@ -18,8 +18,8 @@ extern dyn_var<int>* thread_id_ptr;
 
 // The basic vertices.apply operator
 typedef void (*vertexset_apply_udf_t) (Vertex);
-void vertexset_apply(dyn_var<VertexSubset> &set, vertexset_apply_udf_t);
-void vertexset_apply(dyn_var<GraphT> &edges, vertexset_apply_udf_t);
+void vertexset_apply(VertexSubset &set, vertexset_apply_udf_t);
+void vertexset_apply(GraphT &edges, vertexset_apply_udf_t);
 
 
 
@@ -39,7 +39,7 @@ struct edgeset_apply {
 	// Members
 	SimpleGPUSchedule _default_schedule;
 	Schedule* current_schedule;
-	dyn_var<VertexSubset> * from_set;
+	VertexSubset * from_set;
 	std::function<dyn_var<int>(Vertex)> to_filter;	
 
 	// Constructors with and without user specified schedule
@@ -53,7 +53,7 @@ struct edgeset_apply {
 	}
 
 	// Chaining functions
-	edgeset_apply& from(dyn_var<VertexSubset> &f) {
+	edgeset_apply& from(VertexSubset &f) {
 		from_set = f.addr();
 		return *this;
 	}
@@ -64,13 +64,13 @@ struct edgeset_apply {
 
 
 	// Apply functions
-	void apply(dyn_var<GraphT> &graph, edgeset_apply_udf_w_t udf);
-	void apply(dyn_var<GraphT> &graph, edgeset_apply_udf_t udf) {
+	void apply(GraphT &graph, edgeset_apply_udf_w_t udf);
+	void apply(GraphT &graph, edgeset_apply_udf_t udf) {
 		apply(graph, [=](Vertex src, Vertex dst, dyn_var<int> w){udf(src, dst);});
 	}
 
 
-	void apply_priority(dyn_var<GraphT> &graph, edgeset_apply_udf_w_t udf, PriorityQueue &pq) {
+	void apply_priority(GraphT &graph, edgeset_apply_udf_w_t udf, PriorityQueue &pq) {
 		// We don't need hybrid schedules for now
 		assert(dynamic_cast<SimpleGPUSchedule*>(current_schedule) != nullptr && "At this point only simple schedules are "
 			"supported");
@@ -81,7 +81,7 @@ struct edgeset_apply {
 
 		int on_device = current_context == context_type::DEVICE;	
 		// After all tracking is done, swap the buffers
-		dyn_var<VertexSubset> to = pq.pq.frontier_;
+		VertexSubset to = pq.pq.frontier_;
 		if (simple_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::SPARSE) {
 			if (on_device)
 				to.swap_queues_device();	
@@ -103,13 +103,13 @@ struct edgeset_apply {
 	}
 
 	template <typename T>
-	void apply_modified(dyn_var<GraphT> &graph, dyn_var<VertexSubset> &to, VertexData<T> &tracking_var, 
+	void apply_modified(GraphT &graph, VertexSubset &to, VertexData<T> &tracking_var, 
 			edgeset_apply_udf_t udf, bool allow_dupes = true) {
 		apply_modified(graph, to, tracking_var, [=](Vertex src, Vertex dst, dyn_var<int> w) {udf(src, dst);}, 
 		allow_dupes);
 	}
 	template <typename T>
-	void apply_modified(dyn_var<GraphT> &graph, dyn_var<VertexSubset> &to, VertexData<T> &tracking_var, 
+	void apply_modified(GraphT &graph, VertexSubset &to, VertexData<T> &tracking_var, 
 			edgeset_apply_udf_w_t udf, bool allow_dupes = true) {
 		
 		// If we have a hybrid schedule on our hand, we need to recusrively call two separate versions

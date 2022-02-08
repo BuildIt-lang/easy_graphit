@@ -1,7 +1,5 @@
 #ifndef GRAPHIT_TYPES_H
 #define GRAPHIT_TYPES_H
-#include "graphit/dyn_core.h"
-#include "builder/member_base.h"
 #include "graphit/schedule.h"
 #include "pipeline/extract_cuda.h"
 
@@ -24,132 +22,146 @@ struct VertexDataIndex;
 // Commonly used named types in GraphIt
 #define GRAPH_T_NAME "graphit_runtime::GraphT<int>"
 extern const char graph_t_name[sizeof(GRAPH_T_NAME)];
-using GraphT = typename builder::name<graph_t_name>;
 
 #define VERTEXSUBSET_T_NAME "graphit_runtime::vertexsubset"
 extern const char vertexsubset_t_name[sizeof(VERTEXSUBSET_T_NAME)];
-using VertexSubset = typename builder::name<vertexsubset_t_name>;
 
 #define PRIOQUEUE_T_NAME "graphit_runtime::PrioQueue<int>"
 extern const char prioqueue_t_name[sizeof(PRIOQUEUE_T_NAME)];
-using PrioQueue = typename builder::name<prioqueue_t_name>;
 
 #define FRONTIERLIST_T_NAME "graphit_runtime::FrontierList"
 extern const char frontierlist_t_name[sizeof(FRONTIERLIST_T_NAME)];
-using FrontierList = typename builder::name<frontierlist_t_name>;
 
-template <>
-struct member<0>: public builder::member_base_impl<gbuilder> {
-	using builder::member_base_impl<gbuilder>::member_base_impl;
 
-	typedef gbuilder member_associated_BT;	
-	gbuilder operator[](const gbuilder& t) const;
-	gbuilder operator=(const gbuilder& t) const;
-	template <typename...Types>
-	gbuilder operator()(Types...args);
 
+struct GraphT: public dyn_var<builder::name<graph_t_name>> {
+	typedef dyn_var<builder::name<graph_t_name>> super;
+	using super_name = builder::name<graph_t_name>;
+	using super::dyn_var;
+	using super::operator=;
+	GraphT(const GraphT &t): dyn_var<super_name>((builder::builder)t) {}
+	builder::builder operator= (const GraphT &t) {
+		return (*this) = (builder::builder)t;
+	}
+	GraphT* addr(void) {
+		return this;
+	}
+	// GraphT specific members
+	dyn_var<int> num_vertices = as_member_of(this, "num_vertices");
+	dyn_var<int> num_edges = as_member_of(this, "num_edges");
+	dyn_var<int*> d_src_offsets = as_member_of(this, "d_src_offsets");
+	dyn_var<int*> d_edge_dst = as_member_of(this, "d_edge_dst");
+	dyn_var<int*> d_edge_weight = as_member_of(this, "d_edge_weight");
+	dyn_var<int*> d_edge_src = as_member_of(this, "d_edge_src");
+	dyn_var<int*> out_degrees = as_member_of(this, "d_out_degrees");
+	
+	// GraphT blocking and transpose specific members
+	dyn_var<GraphT::super_name(int)> get_blocked_graph = as_member_of(this, "get_blocked_graph");
+	dyn_var<GraphT::super_name(void)> get_transposed_graph = as_member_of(this, "get_transposed_graph");
+	dyn_var<int> num_buckets = as_member_of(this, "num_buckets");
+	dyn_var<int*> d_bucket_sizes = as_member_of(this, "d_bucket_sizes");	
 };
 
-template <int recur>
-struct member: public builder::member_base_impl<gbuilder> {
-	using builder::member_base_impl<gbuilder>::member_base_impl;
-	typedef member<recur-1> member_t;
+struct VertexSubset: public dyn_var<builder::name<vertexsubset_t_name>> {
+	typedef dyn_var<builder::name<vertexsubset_t_name>> super;
+	using super_name = builder::name<vertexsubset_t_name>;
+	using super::dyn_var;
+	using super::operator=;
 
-	// Operator =
-	gbuilder operator=(const gbuilder& t) const {
-		//return ((gbuilder)*this) = t;
-		gbuilder b(*this);
-		return (b = t);
+	VertexSubset(const VertexSubset &t): dyn_var<super_name>((builder::builder)t) {}
+	builder::builder operator= (const VertexSubset &t) {
+		return (*this) = (builder::builder)t;
 	}
-	gbuilder operator[](const gbuilder& t) const {
-		gbuilder b(*this);
-		return (b[t]);
-	}
-	template <typename...Types>
-	gbuilder operator()(Types...args) {
-		gbuilder b(*this);
-		return b(args...);
+	VertexSubset* addr(void) {
+		return this;
 	}
 
-	// All the members graphit types can have
-	
-	// GraphT related types
-	member_t num_vertices = member_t(this, "num_vertices");
-	member_t num_edges = member_t(this, "num_edges");
-	member_t d_src_offsets = member_t(this, "d_src_offsets");
-	member_t d_edge_dst = member_t(this, "d_edge_dst");
-	member_t d_edge_weight = member_t(this, "d_edge_weight");
-	member_t d_edge_src = member_t(this, "d_edge_src");
-	member_t out_degrees = member_t(this, "d_out_degrees");
-	
-	member_t get_blocked_graph = member_t(this, "get_blocked_graph");
-	member_t get_transposed_graph = member_t(this, "get_transposed_graph");
-	member_t num_buckets = member_t(this, "num_buckets");
-	member_t d_bucket_sizes = member_t(this, "d_bucket_sizes");
+	// VertexSubset related members
+	dyn_var<int> max_elems = as_member_of(this, "max_elems");
+	dyn_var<int> num_elems = as_member_of(this, "num_elems");
+	dyn_var<int*> d_sparse_queue_input = as_member_of(this, "d_sparse_queue_input");
+	dyn_var<char*> d_bit_map_input = as_member_of(this, "d_bit_map_input");
+	dyn_var<char*> d_boolmap = as_member_of(this, "d_boolmap");
+	dyn_var<void(int)> addVertex = as_member_of(this, "addVertex");
 
-	// VertexSubset related types
-	member_t max_elems = member_t(this, "max_elems");
-	member_t num_elems = member_t(this, "num_elems");
-	member_t d_sparse_queue_input = member_t(this, "d_sparse_queue_input");
-	member_t d_bit_map_input = member_t(this, "d_bit_map_input");
-	member_t d_boolmap = member_t(this, "d_boolmap");
-	member_t addVertex = member_t(this, "addVertex");
+	dyn_var<void(void)> swap_queues_host = as_member_of(this, "swap_queues_host");
+	dyn_var<void(void)> swap_bitmaps_host = as_member_of(this, "swap_bitmaps_host");
+	dyn_var<void(void)> swap_boolmaps_host = as_member_of(this, "swap_boolmaps_host");
+	dyn_var<void(void)> swap_queues_device = as_member_of(this, "swap_queues_device");
+	dyn_var<void(void)> swap_bitmaps_device = as_member_of(this, "swap_bitmaps_device");
+	dyn_var<void(void)> swap_boolmaps_device = as_member_of(this, "swap_boolmaps_device");
 
-	member_t swap_queues_host = member_t(this, "swap_queues_host");
-	member_t swap_bitmaps_host = member_t(this, "swap_bitmaps_host");
-	member_t swap_boolmaps_host = member_t(this, "swap_boolmaps_host");
-	member_t swap_queues_device = member_t(this, "swap_queues_device");
-	member_t swap_bitmaps_device = member_t(this, "swap_bitmaps_device");
-	member_t swap_boolmaps_device = member_t(this, "swap_boolmaps_device");
+	dyn_var<int(void)> size_host = as_member_of(this, "size_host");
+	dyn_var<int(void)> size_device = as_member_of(this, "size_device");
 
-	member_t size_host = member_t(this, "size_host");
-	member_t size_device = member_t(this, "size_device");
+	dyn_var<int> curr_dedup_counter = as_member_of(this, "curr_dedup_counter");
 
-	member_t curr_dedup_counter = member_t(this, "curr_dedup_counter");
-
-	// Priority Queue related members
-	member_t init = member_t(this, "init");
-	member_t dequeue = member_t(this, "dequeue");
-	member_t dequeue_device = member_t(this, "dequeue_device");
-	member_t finished = member_t(this, "finished");
-	member_t finished_device = member_t(this, "finished_device");
-	member_t frontier_ = member_t(this, "frontier_");
-	member_t prio_cutoff = member_t(this, "prio_cutoff");
-
-	// FrontierList related members
-	member_t insert_host = member_t(this, "insert_host");
-	member_t retrieve_host = member_t(this, "retrieve_host");
-	member_t insert_device = member_t(this, "insert_device");
-	member_t retrieve_device = member_t(this, "retrieve_device");
-
-	// Type specilization for host vs device
-	gbuilder size(void) {
+	builder::builder size(void) {
 		if (current_context == context_type::HOST)
 			return size_host();	
 		else
 			return size_device();	
 	}
-	void insert(dyn_var<VertexSubset> &v) {
+	
+};
+
+struct PrioQueue: public dyn_var<builder::name<prioqueue_t_name>> {
+	typedef dyn_var<builder::name<prioqueue_t_name>> super;
+	using super_name = builder::name<prioqueue_t_name>;
+	using super::dyn_var;
+	using super::operator=;
+	PrioQueue(const PrioQueue &t): dyn_var<super_name>((builder::builder)t) {}
+	builder::builder operator= (const PrioQueue &t) {
+		return (*this) = (builder::builder)t;
+	}	
+	PrioQueue* addr(void) {
+		return this;
+	}
+
+	//PrioQueue specific members
+	dyn_var<void(void)> init = as_member_of(this, "init");
+	dyn_var<VertexSubset::super_name(void)> dequeue = as_member_of(this, "dequeue");
+	dyn_var<VertexSubset::super_name(void)> dequeue_device = as_member_of(this, "dequeue_device");
+	dyn_var<int(void)> finished = as_member_of(this, "finished");
+	dyn_var<int(void)> finished_device = as_member_of(this, "finished_device");
+	VertexSubset frontier_ = as_member_of(this, "frontier_");
+	dyn_var<int> prio_cutoff = as_member_of(this, "prio_cutoff");
+	
+};
+
+struct FrontierList: public dyn_var<builder::name<frontierlist_t_name>> {
+	typedef dyn_var<builder::name<frontierlist_t_name>> super;
+	using super_name = builder::name<frontierlist_t_name>;
+	using super::dyn_var;
+	using super::operator=;
+	FrontierList(const FrontierList &t): dyn_var<super_name>((builder::builder)t) {}
+	builder::builder operator= (const FrontierList &t) {
+		return (*this) = (builder::builder)t;
+	}
+	FrontierList* addr(void) {
+		return this;
+	}
+
+	// FrontierList specific members
+	dyn_var<void(VertexSubset::super_name)> insert_host = as_member_of(this, "insert_host");
+	dyn_var<VertexSubset::super_name(void)> retrieve_host = as_member_of(this, "retrieve_host");
+	dyn_var<void(VertexSubset::super_name)> insert_device = as_member_of(this, "insert_device");
+	dyn_var<VertexSubset::super_name(void)> retrieve_device = as_member_of(this, "retrieve_device");
+
+	void insert(VertexSubset &v) {
 		if (current_context == context_type::HOST)
 			insert_host(v);
 		else
 			insert_device(v);
 	}
-	void retrieve(dyn_var<VertexSubset> &v) {
+	void retrieve(VertexSubset &v) {
 		if (current_context == context_type::HOST)
 			retrieve_host(v);
 		else
 			retrieve_device(v);
 	}
-
+	
 };
-
-template <typename...Types>
-gbuilder member<0>::operator()(Types...args) {
-	gbuilder b(*this);
-	return b(args...);
-}
-
 
 struct Vertex {
 // Primary members to hold the vertex id
@@ -177,17 +189,12 @@ struct Vertex {
 	operator dyn_var<int> () {
 		return vid;	
 	}
-/*
-	operator gbuilder() {
-		return (gbuilder) vid;
-	}
-*/
 };
 namespace runtime {
-extern dyn_var<void (VertexSubset, int)> enqueue_bitmap;
-extern dyn_var<void (VertexSubset, int)> enqueue_boolmap;
-extern dyn_var<void (VertexSubset, int)> enqueue_sparse;
-extern dyn_var<void (VertexSubset, int)> enqueue_sparse_no_dupes;
+extern dyn_var<void (VertexSubset::super_name, int)> enqueue_bitmap;
+extern dyn_var<void (VertexSubset::super_name, int)> enqueue_boolmap;
+extern dyn_var<void (VertexSubset::super_name, int)> enqueue_sparse;
+extern dyn_var<void (VertexSubset::super_name, int)> enqueue_sparse_no_dupes;
 extern dyn_var<void (void)> dedup_frontier_perfect;
 extern dyn_var<void (void*, void*, int)> copyHostToDevice;
 extern dyn_var<void (void*, void*, int)> copyDeviceToHost;
@@ -204,7 +211,7 @@ struct VertexDataIndex {
 // Analysis related fields
 	bool is_tracked;	
 	bool allow_dupes;	
-	dyn_var<VertexSubset> *output_queue;
+	VertexSubset *output_queue;
 	Vertex::access_type current_access;
 	graphit::SimpleGPUSchedule::frontier_creation_type frontier_creation;
 // Constructors
@@ -344,7 +351,7 @@ struct VertexData {
 // Analysis related fields
 	bool is_tracked;	
 	bool allow_dupes;
-	dyn_var<VertexSubset> *output_queue;
+	VertexSubset *output_queue;
 	graphit::SimpleGPUSchedule::frontier_creation_type frontier_creation;
 // Constructors
 	VertexData(std::string name): data(name.c_str()) {
@@ -399,12 +406,12 @@ struct VertexData {
 };
 
 struct PriorityQueue {
-	dyn_var<PrioQueue> pq;
+	PrioQueue pq;
 	VertexData<int> *p;
 
 	SimpleGPUSchedule* current_schedule;
 	PriorityQueue(std::string name): pq(name.c_str()) {}
-	void init(dyn_var<GraphT> &edges, VertexData<int>& p_, dyn_var<int> init_p, dyn_var<int> delta, dyn_var<int> src) {
+	void init(GraphT &edges, VertexData<int>& p_, dyn_var<int> init_p, dyn_var<int> delta, dyn_var<int> src) {
 		p = &p_;
 		pq.init(edges, p->data, init_p, delta, src);
 	}
@@ -427,7 +434,7 @@ struct PriorityQueue {
 		else
 			return pq.finished();
 	}
-	dyn_var<VertexSubset> dequeue(void) {
+	VertexSubset dequeue(void) {
 		if (current_context == context_type::DEVICE)
 			return pq.dequeue_device();
 		else

@@ -12,7 +12,6 @@
 
 using graphit::Vertex;
 using graphit::VertexData;
-using graphit::dyn_var;
 using graphit::VertexSubset;
 using graphit::GraphT;
 
@@ -21,13 +20,10 @@ VertexData<float> old_rank("old_rank");
 VertexData<float> new_rank("new_rank");
 VertexData<float> contrib("contrib");
 
-dyn_var<int> update_outer;
-dyn_var<int> update_inner;
-
 const float damp = 0.85;
 
 
-dyn_var<GraphT> edges("edges");
+GraphT edges("edges");
 
 static void computeContrib(Vertex v) {
 	contrib[v] = old_rank[v] / edges.out_degrees[(dyn_var<int>)v];

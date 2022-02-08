@@ -12,7 +12,6 @@
 
 using graphit::Vertex;
 using graphit::VertexData;
-using graphit::dyn_var;
 using graphit::VertexSubset;
 using graphit::GraphT;
 using graphit::FrontierList;
@@ -23,7 +22,7 @@ VertexData<float> dependences("dependences");
 VertexData<unsigned char> visited("visited");
 
 
-dyn_var<GraphT> edges("edges");
+GraphT edges("edges");
 
 
 static void reset(Vertex v) {
@@ -70,14 +69,14 @@ static void testcase(dyn_var<char*> graph_name, dyn_var<int> src, dyn_var<float>
 
 	graphit::current_context = graphit::context_type::HOST;
 	edges = graphit::runtime::load_graph(graph_name);
-	dyn_var<GraphT> t_edges = edges.get_transposed_graph()[0];
+	GraphT t_edges = edges.get_transposed_graph()[0];
 	
 	num_paths.allocate(edges.num_vertices);
 	dependences.allocate(edges.num_vertices);
 	visited.allocate(edges.num_vertices);
 	
 	for (dyn_var<int> trial = 0; trial < 3; trial = trial + 1) {
-		dyn_var<VertexSubset> frontier = graphit::runtime::new_vertex_subset(edges.num_vertices);
+		VertexSubset frontier = graphit::runtime::new_vertex_subset(edges.num_vertices);
 
 		graphit::runtime::start_timer();
 		graphit::vertexset_apply(edges, reset);
@@ -87,7 +86,7 @@ static void testcase(dyn_var<char*> graph_name, dyn_var<int> src, dyn_var<float>
 		frontier.addVertex(src);
 
 		dyn_var<int> round = 0;
-		dyn_var<FrontierList> frontier_list = graphit::runtime::new_frontier_list(edges.num_vertices);	
+		FrontierList frontier_list = graphit::runtime::new_frontier_list(edges.num_vertices);	
 		frontier_list.insert(frontier);
 		
 		graphit::fuse_kernel(to_fuse, [&]() {

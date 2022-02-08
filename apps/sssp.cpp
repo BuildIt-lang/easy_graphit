@@ -12,14 +12,13 @@
 
 using graphit::Vertex;
 using graphit::VertexData;
-using graphit::dyn_var;
 using graphit::VertexSubset;
 using graphit::GraphT;
 using graphit::PriorityQueue;
 
 
 VertexData<int> SP("SP");
-dyn_var<GraphT> edges("edges");
+GraphT edges("edges");
 PriorityQueue pq("pq");
 
 static void updateEdge(Vertex src, Vertex dst, dyn_var<int> weight) {
@@ -47,7 +46,7 @@ static void testcase(dyn_var<char*> graph_name, dyn_var<int> src, dyn_var<int> d
 
 		graphit::fuse_kernel(to_fuse, [&]() {
 			while(pq.finished() == 0) {
-				dyn_var<VertexSubset> frontier = pq.dequeue();
+				VertexSubset frontier = pq.dequeue();
 				graphit::edgeset_apply(s1).from(frontier).apply_priority(edges, updateEdge, pq);
 			}	
 		});

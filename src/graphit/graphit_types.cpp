@@ -8,13 +8,5 @@ namespace graphit {
 	
 	enum context_type current_context = context_type::HOST;
 
-	gbuilder member<0>::operator[](const gbuilder& t) const {
-		gbuilder b(*this);
-		return (b[t]);
-	}
-	gbuilder member<0>::operator=(const gbuilder& t) const {
-		gbuilder b(*this);
-		return (b = t);
-	}
 
 }

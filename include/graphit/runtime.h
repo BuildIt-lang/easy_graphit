@@ -4,19 +4,19 @@
 namespace graphit {
 namespace runtime {
 
-extern dyn_var<VertexSubset (int, int)>  new_vertex_subset;
-extern dyn_var<GraphT (char*)> load_graph;
-extern dyn_var<void (VertexSubset, int)> enqueue_sparse;
-extern dyn_var<void (VertexSubset, int)> enqueue_sparse_no_dupes;
-extern dyn_var<void (VertexSubset, int)> enqueue_bitmap;
-extern dyn_var<void (VertexSubset, int)> enqueue_boomap;
+extern dyn_var<VertexSubset::super_name (int, int)>  new_vertex_subset;
+extern dyn_var<GraphT::super_name (char*)> load_graph;
+extern dyn_var<void (VertexSubset::super_name, int)> enqueue_sparse;
+extern dyn_var<void (VertexSubset::super_name, int)> enqueue_sparse_no_dupes;
+extern dyn_var<void (VertexSubset::super_name, int)> enqueue_bitmap;
+extern dyn_var<void (VertexSubset::super_name, int)> enqueue_boomap;
 
-extern dyn_var<void (VertexSubset)> to_sparse_host;
-extern dyn_var<void (VertexSubset)> to_sparse_device;
+extern dyn_var<void (VertexSubset::super_name)> to_sparse_host;
+extern dyn_var<void (VertexSubset::super_name)> to_sparse_device;
 
-extern dyn_var<void (VertexSubset)> to_bitmap;
-extern dyn_var<void (VertexSubset)> to_boolmap;
-extern dyn_var<int (VertexSubset, int)> checkBit;
+extern dyn_var<void (VertexSubset::super_name)> to_bitmap;
+extern dyn_var<void (VertexSubset::super_name)> to_boolmap;
+extern dyn_var<int (VertexSubset::super_name, int)> checkBit;
 extern dyn_var<void (void*, int)> cudaMalloc;
 extern dyn_var<void (void)> sync_threads;
 extern dyn_var<void (void)> sync_grid;

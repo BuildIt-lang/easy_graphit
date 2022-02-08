@@ -12,13 +12,12 @@
 
 using graphit::Vertex;
 using graphit::VertexData;
-using graphit::dyn_var;
 using graphit::VertexSubset;
 using graphit::GraphT;
 
 
 VertexData<int> SP("SP");
-dyn_var<GraphT> edges("edges");
+GraphT edges("edges");
 
 static void reset(Vertex v) {
 	SP[v] = 0;
@@ -37,26 +36,27 @@ static void update_func_min_src(Vertex src, Vertex dst) {
 
 static void testcase(dyn_var<char*> graph_name, graphit::Schedule &s1) {	
 	graphit::current_context = graphit::context_type::HOST;
+
+	VertexSubset frontier = graphit::runtime::new_vertex_subset(edges.num_vertices);
+	VertexSubset output = graphit::runtime::new_vertex_subset(edges.num_vertices);
+
 	edges = graphit::runtime::load_graph(graph_name);
 
 	SP[0] = 0;
 
-	dyn_var<VertexSubset> frontier = graphit::runtime::new_vertex_subset(edges.num_vertices);
 	// Simple test for vertex set apply
 	graphit::vertexset_apply(frontier, reset);
 
 	// Simple test for edgset apply no output
 	graphit::edgeset_apply().from(frontier).apply(edges, update_func);
 
-	dyn_var<VertexSubset> output = graphit::runtime::new_vertex_subset(edges.num_vertices);
 	// Simple test for edgset apply output
+
 	graphit::edgeset_apply().from(frontier).apply_modified(edges, output, SP, update_func_min);
 
 	graphit::edgeset_apply().from(frontier).apply_modified(edges, output, SP, update_func_min_src);
 
-	graphit::edgeset_apply(s1).from(frontier).apply_modified(edges, output, SP, update_func_min);
-
-		
+	graphit::edgeset_apply(s1).from(frontier).apply_modified(edges, output, SP, update_func_min);		
 }
 
 
