@@ -612,8 +612,8 @@ void edgeset_apply::apply(GraphT &graph, edgeset_apply_udf_w_t udf) {
 				return (*from_set).d_sparse_queue_input[a];
 			};
 		}
-		GraphT g = graph_to_use[0];
-		graph_to_use = g.get_transposed_graph();
+		//GraphT g = graph_to_use[0];
+		graph_to_use = ((GraphT)(builder::cast)graph_to_use[0]).get_transposed_graph();
 		udf_apply = [=] (Vertex src, Vertex dst, dyn_var<int> w) {
 			udf(dst, src, w);
 		};
@@ -622,8 +622,8 @@ void edgeset_apply::apply(GraphT &graph, edgeset_apply_udf_w_t udf) {
 	if (simple_schedule->load_balancing == SimpleGPUSchedule::load_balancing_type::EDGE_ONLY 
 		&& simple_schedule->edge_blocking == SimpleGPUSchedule::edge_blocking_type::BLOCKED) {
 		assert(simple_schedule->block_size != -1 && "Invalid block size value");	
-		GraphT g = graph_to_use[0];
-		graph_to_use = g.get_blocked_graph(simple_schedule->block_size);
+		//GraphT g = graph_to_use[0];
+		graph_to_use = ((GraphT)(builder::cast)graph_to_use[0]).get_blocked_graph(simple_schedule->block_size);
 	}
 	
 	
